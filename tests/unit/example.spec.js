@@ -1,6 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 
-describe('Home.vue', () => {
+describe('Main.vue', () => {
   it('renders props.msg when passed', () => {
     const msg = 'new message'
     const wrapper = shallowMount(Home, {
