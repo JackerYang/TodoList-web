@@ -1,7 +1,7 @@
 import axios from "axios";
 import {Message} from "view-design";
 
-axios.defaults.baseURL = "http://192.168.2.82:8081";
+axios.defaults.baseURL = "http://114.55.95.208:8094";
 
 // 添加请求拦截器<==>请求发起前做的事
 axios.interceptors.request.use(config => {
