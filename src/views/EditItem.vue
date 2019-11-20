@@ -26,7 +26,8 @@
 </template>
 
 <script>
-  import {addItem, getItem} from "../api/api";
+  import {addItem, getItem, upldateItem} from "../api/api";
+  import {timeFormat} from "../libs/utils";
 
   export default {
     name: "EditItem",
@@ -52,16 +53,31 @@
       };
     },
     methods: {
-      changeDateTime (at) {
-        console.log(at);
-        this.dataObj.time = at;
-      },
       handleSubmit (name) {
         this.$refs[name].validate(valid => {
           if (valid) {
-            addItem(this.dataObj).then(res => {
-              console.log(res);
-            });
+            let {item, time} = this.dataObj;
+            let reqObj = {
+              item,
+              time: timeFormat(time)
+            };
+            if (this.isAdd) {
+              // 添加
+              addItem(reqObj).then(res => {
+                if (res.data.status === 200) {
+                  this.$router.push({name: "home"});
+                  this.$Message.success("添加成功！");
+                }
+              });
+            } else {
+              // 修改
+              upldateItem(reqObj).then(res => {
+                if (res.data.status === 200) {
+                  this.$router.push({name: "home"});
+                  this.$Message.success("修改成功！");
+                }
+              });
+            }
           }
         });
       },
@@ -70,15 +86,15 @@
       }
     },
     created () {
-      if(!this.isAdd) {
-        let id = this.$route.path.split("/").reverse()[0]
+      if (!this.isAdd) {
+        let id = this.$route.path.split("/").reverse()[0];
         getItem(id).then(res => {
-          if(res.data.status === 200) {
-            let { time, item } = res.data.data
-            this.dataObj.time = time
-            this.dataObj.item = item
+          if (res.data.status === 200) {
+            let {time, item} = res.data.data;
+            this.dataObj.time = time;
+            this.dataObj.item = item;
           }
-        })
+        });
       }
     }
   };

@@ -1,20 +1,13 @@
 <template>
   <div class="home">
     <div class="operate">
-      <Button v-for="btn in btnLists"
-              :key="btn.label"
-              shape="circle"
-              :type="btn.type"
-              :ghost="btn.ghost"
-              :icon="btn.icon"
-              :disable="btn.disable"
-              @click="btn.fn">
-        {{btn.label}}
-      </Button>
+      <operate-btns :btnLists="btnLists" :selectRow="selectRow"></operate-btns>
     </div>
 
     <div class="data">
-      <Table :columns="columns" border :data="dataList" @on-select="selectRow = $event">
+      <Table :columns="columns" ref="table" :row-class-name="rowSetColor" border :data="dataList"
+             @on-row-click="rowClick"
+             @on-selection-change="selectRow = $event">
         <template slot-scope="{ row }" slot="todo">
           <Icon v-if="row.state !== 1" class="finish" title="完成事项： 置为已完成" @click="finish(row.id)"
                 type="md-checkmark-circle-outline"/>
@@ -28,10 +21,14 @@
 </template>
 
 <script>
+  import OperateBtns from "../components/OperateBtns";
   import {getItemList, upldateItem, delItems} from "../api/api";
 
   export default {
     name: "Home",
+    components: {
+      OperateBtns
+    },
     data () {
       return {
         // 操作按钮
@@ -41,6 +38,7 @@
             icon: "md-add",
             type: "default",
             ghost: false,
+            disabled: 0,
             fn: this.add
           },
           {
@@ -48,6 +46,7 @@
             icon: "md-create",
             type: "default",
             ghost: false,
+            disabled: 1,
             fn: this.edit
           },
           {
@@ -55,6 +54,7 @@
             icon: "ios-trash",
             type: "error",
             ghost: true,
+            disabled: 2,
             fn: this.del
           }
         ],
@@ -70,7 +70,25 @@
             title: "状态",
             key: "_state",
             align: "center",
-            width: 80
+            width: 100,
+            filters: [
+              {
+                label: "已完成",
+                value: 1
+              },
+              {
+                label: "未完成",
+                value: 0
+              },
+              {
+                label: "已取消",
+                value: 2
+              }
+            ],
+            filterMultiple: false,
+            filterMethod (value, row) {
+              return row.state === value;
+            }
           },
           {
             title: "事项",
@@ -87,7 +105,7 @@
             title: "操作",
             slot: "todo",
             align: "center",
-            width: 175
+            width: 100
           }
         ],
         // 表格行数据
@@ -99,6 +117,7 @@
           2: "已取消"
         },
 
+        // 选中的行
         selectRow: []
       };
     },
@@ -115,36 +134,34 @@
         });
       },
 
+      // 点击行事件
+      rowClick (data, index) {
+        this.$refs.table.toggleSelect(index);
+      },
+
       // 添加
       add () {
         this.$router.push({name: "add-item"});
       },
       // 编辑
-      edit (id) {
-        if(this.selectRow.length === 1) {
-          this.$router.push({
-            name: "edit-item",
-            params: {
-              id: this.selectRow[0].id
-            }
-          });
-        } else {
-          this.$Message.warning("请选中一项！")
-        }
+      edit (sR) {
+        this.$router.push({
+          name: "edit-item",
+          params: {
+            id: sR[0].id
+          }
+        });
       },
       // 删除
-      del () {
-        if(this.selectRow.length > 0) {
-          let ids = this.selectRow.map(item => item.id)
-          delItems(ids).then(res => {
-            if (res.data.status === 200) {
-              this.getData()
-              this.$Message.success("删除成功！")
-            }
-          })
-        } else {
-          this.$Message.warning("请至少选中一项！")
-        }
+      del (sR) {
+        let ids = sR.map(i => i.id);
+        delItems(ids).then(res => {
+          if (res.data.status === 200) {
+            this.getData();
+            this.selectRow = [];
+            this.$Message.success("删除成功！");
+          }
+        });
       },
 
       // 更新事项状态
@@ -167,6 +184,20 @@
       // 还原事项
       revert (id) {
         this.updateState(id, 0);
+      },
+
+      // 不同行设置不同颜色
+      rowSetColor (row) {
+        if (row.state === 0) {
+          // 未完成
+          return "row-undone";
+        } else if (row.state === 1) {
+          // 已完成
+          return "row-finish";
+        } else if (row.state === 2) {
+          // 已取消
+          return "row-cancel";
+        }
       }
     },
     created () {
@@ -175,7 +206,7 @@
   };
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
   @import "../assets/less/common.less";
 
   .home {
@@ -195,23 +226,45 @@
       width: 100%;
 
       .ivu-table-wrapper {
-        .ivu-icon {
-          font-size: 22px;
-          margin: 0 3px;
-          cursor: pointer;
+        .ivu-table-body {
+          .ivu-icon {
+            font-size: 22px;
+            margin: 0 3px;
+            cursor: pointer;
+          }
+
+          .finish {
+            color: @color-success;
+          }
+
+          .cancel {
+            color: @color-error;
+          }
+
+          .revert {
+            color: @color-warning;
+          }
+
+          .row-finish {
+            td {
+              color: #c5c8ce;
+            }
+          }
+
+          .row-undone {
+            td {
+              color: #17233d;
+            }
+          }
+
+          .row-cancel {
+            td {
+              color: #c5c8ce;
+              text-decoration: line-through;
+            }
+          }
         }
 
-        .finish {
-          color: @color-success;
-        }
-
-        .cancel {
-          color: @color-error;
-        }
-
-        .revert {
-          color: @color-warning;
-        }
       }
     }
   }
