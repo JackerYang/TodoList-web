@@ -9,10 +9,10 @@
              @on-row-click="rowClick"
              @on-selection-change="selectRow = $event">
         <template slot-scope="{ row }" slot="todo">
-          <Icon v-if="row.state !== 1" class="finish" title="完成事项： 置为已完成" @click="finish(row.id)"
+          <Icon v-if="row.state !== 1" class="finish" title="完成事项： 置为已完成" @click.stop="finish(row.id)"
                 type="md-checkmark-circle-outline"/>
-          <Icon v-if="row.state !== 2" class="cancel" title="取消事项： 置为已取消" @click="cancel(row.id)" type="md-close"/>
-          <Icon v-if="row.state !== 0" class="revert" title="还原事项： 置为未完成" @click="revert(row.id)" type="ios-undo"/>
+          <Icon v-if="row.state !== 2" class="cancel" title="取消事项： 置为已取消" @click.stop="cancel(row.id)" type="md-close"/>
+          <Icon v-if="row.state !== 0" class="revert" title="还原事项： 置为未完成" @click.stop="revert(row.id)" type="ios-undo"/>
         </template>
       </Table>
     </div>
